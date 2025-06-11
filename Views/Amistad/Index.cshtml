@@ -1,0 +1,191 @@
+@model List<ASP_MVC_Prueba.Models.Usuarios>
+@{
+    ViewData["Title"] = "Mis Amigos";
+    var solicitudesPendientes = ViewBag.SolicitudesPendientes as List<ASP_MVC_Prueba.Models.Amistad>;
+    var usuarioId = ViewBag.UsuarioId;
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/amistad.css" />
+}
+
+<div class="amistad-container">
+    <!-- Header del módulo con pestañas de navegación -->
+    <div class="amistad-tabs">
+        <div class="amistad-tab active">
+            <a href="@Url.Action("Index", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-users"></i> Mis Amigos
+            </a>
+        </div>
+        <div class="amistad-tab">
+            <a href="@Url.Action("SolicitudesPendientes", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-bell"></i> Solicitudes 
+                @if (solicitudesPendientes != null && solicitudesPendientes.Count > 0)
+                {
+                    <span class="amistad-badge">@solicitudesPendientes.Count</span>
+                }
+            </a>
+        </div>
+        <div class="amistad-tab">
+            <a href="@Url.Action("BuscarAmigos", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-search"></i> Buscar Amigos
+            </a>
+        </div>
+    </div>
+
+    <!-- Título del módulo -->
+    <div class="amistad-header">
+        <div class="amistad-title">
+            <i class="fas fa-users"></i>
+            <h2>Mis Amigos</h2>
+        </div>
+        <div class="amistad-actions">
+            <a href="@Url.Action("BuscarAmigos", "Amistad")" class="amistad-btn amistad-btn-primary">
+                <i class="fas fa-user-plus"></i> Buscar Amigos
+            </a>
+            <a href="@Url.Action("SolicitudesPendientes", "Amistad")" class="amistad-btn amistad-btn-secondary position-relative">
+                <i class="fas fa-bell"></i> Solicitudes
+                @if (solicitudesPendientes != null && solicitudesPendientes.Count > 0)
+                {
+                    <span class="amistad-badge">
+                        @solicitudesPendientes.Count
+                    </span>
+                }
+            </a>
+        </div>
+    </div>
+
+    <!-- Debug info - quitar en producción -->
+    <div class="amistad-debug" style="background: rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px; font-size: 0.8rem;">
+        <p>Usuario ID: @usuarioId</p>
+        <p>Nombre: @User.Identity.Name</p>
+        <p>Solicitudes pendientes: @(solicitudesPendientes?.Count ?? 0)</p>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="amistad-notifications">
+        @if (TempData["Success"] != null)
+        {
+            <div class="amistad-alert amistad-alert-success">
+                <div class="amistad-alert-content">
+                    <i class="fas fa-check-circle"></i>
+                    <span>@TempData["Success"]</span>
+                </div>
+                <button type="button" class="amistad-alert-close" data-bs-dismiss="alert">×</button>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="amistad-alert amistad-alert-error">
+                <div class="amistad-alert-content">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>@TempData["Error"]</span>
+                </div>
+                <button type="button" class="amistad-alert-close" data-bs-dismiss="alert">×</button>
+            </div>
+        }
+    </div>
+
+    <!-- Lista de amigos -->
+    <div class="amistad-content">
+        @if (Model != null && Model.Count > 0)
+        {
+            <div class="amistad-grid">
+                @foreach (var amigo in Model)
+                {
+                    <div class="amistad-card">
+                        <div class="amistad-card-content">
+                            <div class="amistad-card-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="amistad-card-info">
+                                <h3>@amigo.NombreCompleto</h3>
+                                <p>@amigo.Email</p>
+                            </div>
+                            <div class="amistad-card-actions">
+                                <div class="amistad-dropdown">
+                                    <button class="amistad-dropdown-toggle">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <div class="amistad-dropdown-menu">
+                                        <form method="post" action="@Url.Action("EliminarAmistad", "Amistad")">
+                                            <input type="hidden" name="amigoId" value="@amigo.Id_Usuarios" />
+                                            <button type="submit" class="amistad-dropdown-item amistad-text-danger" 
+                                                    onclick="return confirm('¿Estás seguro de eliminar esta amistad?')">
+                                                <i class="fas fa-user-minus"></i> Eliminar amistad
+                                            </button>
+                                        </form>
+                                        <form method="post" action="@Url.Action("BloquearUsuario", "Amistad")">
+                                            <input type="hidden" name="usuarioABloquearId" value="@amigo.Id_Usuarios" />
+                                            <button type="submit" class="amistad-dropdown-item amistad-text-warning" 
+                                                    onclick="return confirm('¿Estás seguro de bloquear a este usuario?')">
+                                                <i class="fas fa-ban"></i> Bloquear usuario
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="amistad-empty">
+                <div class="amistad-empty-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <h3>No tienes amigos aún</h3>
+                <p>¡Comienza a buscar y agregar amigos para conectar con otros cinéfilos!</p>
+                <a href="@Url.Action("BuscarAmigos", "Amistad")" class="amistad-btn amistad-btn-primary">
+                    <i class="fas fa-search"></i> Buscar Amigos
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Toggle dropdown menu
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdowns = document.querySelectorAll('.amistad-dropdown-toggle');
+            
+            dropdowns.forEach(dropdown => {
+                dropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const menu = this.nextElementSibling;
+                    menu.classList.toggle('show');
+                    
+                    // Close other dropdowns
+                    document.querySelectorAll('.amistad-dropdown-menu.show').forEach(openMenu => {
+                        if (openMenu !== menu) {
+                            openMenu.classList.remove('show');
+                        }
+                    });
+                });
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.amistad-dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            });
+            
+            // Alert auto-close
+            const alerts = document.querySelectorAll('.amistad-alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                    setTimeout(() => {
+                        alert.style.display = 'none';
+                    }, 500);
+                }, 4000);
+            });
+        });
+    </script>
+}

@@ -1,0 +1,151 @@
+@model List<ASP_MVC_Prueba.Models.Amistad>
+@{
+    ViewData["Title"] = "Solicitudes de Amistad";
+    var usuarioId = ViewBag.UsuarioId;
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/amistad.css" />
+}
+
+<div class="amistad-container">
+    <!-- Header del módulo con pestañas de navegación -->
+    <div class="amistad-tabs">
+        <div class="amistad-tab">
+            <a href="@Url.Action("Index", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-users"></i> Mis Amigos
+            </a>
+        </div>
+        <div class="amistad-tab active">
+            <a href="@Url.Action("SolicitudesPendientes", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-bell"></i> Solicitudes 
+                @if (Model != null && Model.Count > 0)
+                {
+                    <span class="amistad-badge">@Model.Count</span>
+                }
+            </a>
+        </div>
+        <div class="amistad-tab">
+            <a href="@Url.Action("BuscarAmigos", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-search"></i> Buscar Amigos
+            </a>
+        </div>
+    </div>
+
+    <!-- Header del módulo -->
+    <div class="amistad-header">
+        <div class="amistad-title">
+            <i class="fas fa-bell"></i>
+            <h2>Solicitudes de Amistad</h2>
+        </div>
+        <div class="amistad-actions">
+            <a href="@Url.Action("Index", "Amistad")" class="amistad-btn amistad-btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a Mis Amigos
+            </a>
+        </div>
+    </div>
+
+    <!-- Debug info - quitar en producción -->
+    <div class="amistad-debug" style="background: rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px; font-size: 0.8rem;">
+        <p>Usuario ID: @usuarioId</p>
+        <p>Nombre: @User.Identity.Name</p>
+        <p>Solicitudes pendientes: @(Model?.Count ?? 0)</p>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="amistad-notifications">
+        @if (TempData["Success"] != null)
+        {
+            <div class="amistad-alert amistad-alert-success">
+                <div class="amistad-alert-content">
+                    <i class="fas fa-check-circle"></i>
+                    <span>@TempData["Success"]</span>
+                </div>
+                <button type="button" class="amistad-alert-close" data-bs-dismiss="alert">×</button>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="amistad-alert amistad-alert-error">
+                <div class="amistad-alert-content">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>@TempData["Error"]</span>
+                </div>
+                <button type="button" class="amistad-alert-close" data-bs-dismiss="alert">×</button>
+            </div>
+        }
+    </div>
+
+    <!-- Lista de solicitudes -->
+    <div class="amistad-content">
+        @if (Model != null && Model.Count > 0)
+        {
+            <div class="amistad-solicitudes">
+                @foreach (var solicitud in Model)
+                {
+                    <div class="amistad-solicitud-card">
+                        <div class="amistad-solicitud-content">
+                            <div class="amistad-card-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="amistad-card-info">
+                                <h3>@solicitud.UsuarioSolicitante.NombreCompleto</h3>
+                                <p>@solicitud.UsuarioSolicitante.Email</p>
+                                <div class="amistad-fecha">
+                                    <i class="far fa-clock"></i>
+                                    <span>Enviada el @solicitud.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </div>
+                            <div class="amistad-solicitud-actions">
+                                <form method="post" action="@Url.Action("AceptarSolicitud", "Amistad")" class="amistad-form">
+                                    <input type="hidden" name="amistadId" value="@solicitud.AmistadId" />
+                                    <button type="submit" class="amistad-btn amistad-btn-success">
+                                        <i class="fas fa-check"></i> Aceptar
+                                    </button>
+                                </form>
+                                <form method="post" action="@Url.Action("RechazarSolicitud", "Amistad")" class="amistad-form">
+                                    <input type="hidden" name="amistadId" value="@solicitud.AmistadId" />
+                                    <button type="submit" class="amistad-btn amistad-btn-danger">
+                                        <i class="fas fa-times"></i> Rechazar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="amistad-empty">
+                <div class="amistad-empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h3>No tienes solicitudes pendientes</h3>
+                <p>Cuando alguien te envíe una solicitud de amistad, aparecerá aquí.</p>
+                <a href="@Url.Action("BuscarAmigos", "Amistad")" class="amistad-btn amistad-btn-primary">
+                    <i class="fas fa-search"></i> Buscar Amigos
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Alert auto-close
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.amistad-alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                    setTimeout(() => {
+                        alert.style.display = 'none';
+                    }, 500);
+                }, 4000);
+            });
+        });
+    </script>
+}

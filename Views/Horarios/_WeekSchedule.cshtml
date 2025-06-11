@@ -1,0 +1,152 @@
+@model Tuple<IEnumerable<ASP_MVC_Prueba.Models.Horarios>, List<DateTime>, List<TimeSpan>, List<ASP_MVC_Prueba.Models.Salas>, string[], Func<DateTime, TimeSpan, int, IEnumerable<ASP_MVC_Prueba.Models.Horarios>>, DateTime>
+
+@{
+    // Extract the current date and time from the model
+    var currentDateTime = Model.Item7;
+}
+
+<div class="accordion" id="salasAccordion@(Model.Item2[0].ToString("ddMM"))">
+    @foreach (var sala in Model.Item4)
+    {
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading@(sala.Id_Salas)@(Model.Item2[0].ToString("ddMM"))">
+                <button class="accordion-button @(sala.Id_Salas == 1 ? "" : "collapsed")" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#collapse@(sala.Id_Salas)@(Model.Item2[0].ToString("ddMM"))" 
+                        aria-expanded="@(sala.Id_Salas == 1 ? "true" : "false")" 
+                        aria-controls="collapse@(sala.Id_Salas)@(Model.Item2[0].ToString("ddMM"))">
+                    <div class="d-flex align-items-center">
+                        <span class="fw-bold">Sala @sala.Nombre</span>
+                        <span class="badge bg-dark ms-2">@sala.Tipo</span>
+                        <span class="badge bg-secondary ms-2"><i class="fas fa-chair me-1"></i> @sala.Capacidad asientos</span>
+                    </div>
+                </button>
+            </h2>
+            <div id="collapse@(sala.Id_Salas)@(Model.Item2[0].ToString("ddMM"))" 
+                 class="accordion-collapse collapse @(sala.Id_Salas == 1 ? "show" : "")" 
+                 aria-labelledby="heading@(sala.Id_Salas)@(Model.Item2[0].ToString("ddMM"))" 
+                 data-bs-parent="#salasAccordion@(Model.Item2[0].ToString("ddMM"))">
+                <div class="accordion-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-center" style="min-width: 100px;">Horario</th>
+                                    @foreach (var day in Model.Item2)
+                                    {
+                                        var isToday = day.Date == currentDateTime.Date;
+                                        <th class="text-center @(isToday ? "bg-primary" : "")" style="min-width: 150px;">
+                                            <div class="d-flex flex-column align-items-center">
+                                                <span class="fw-bold">@Model.Item5[Array.IndexOf(Model.Item2.ToArray(), day)]</span>
+                                                @if (isToday)
+                                                {
+                                                    <div class="mt-1 bg-warning text-dark px-2 py-1 rounded-pill">
+                                                        <strong>HOY @day.ToString("dd/MM")</strong>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <small>@day.ToString("dd/MM")</small>
+                                                }
+                                            </div>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var timeSlot in Model.Item3)
+                                {
+                                    <tr>
+                                        <td class="text-center align-middle fw-bold">
+                                            @timeSlot.ToString(@"hh\:mm")
+                                        </td>
+                                        @foreach (var day in Model.Item2)
+                                        {
+                                            var isToday = day.Date == currentDateTime.Date;
+                                            <td class="text-center p-2 @(isToday ? "bg-light" : "")">
+                                                @{
+                                                    var horario = Model.Item6(day, timeSlot, sala.Id_Salas).FirstOrDefault();
+                                                    
+                                                    if (horario != null)
+                                                    {
+                                                        // Determine if this is a past screening based on the current time
+                                                        var horarioDateTime = new DateTime(
+                                                            day.Year, day.Month, day.Day, 
+                                                            timeSlot.Hours, timeSlot.Minutes, 0
+                                                        );
+                                                        bool isPastHorario = horarioDateTime < currentDateTime;
+                                                        
+                                                        <div class="card @(isPastHorario ? "bg-light border-secondary opacity-75" : (isToday ? "border-primary" : "bg-light")) mb-0">
+                                                            <div class="card-body p-2">
+                                                                <h6 class="card-title mb-1">@horario.Pelicula.Titulo</h6>
+                                                                <p class="card-text small mb-1">
+                                                                    <span class="badge bg-info">@horario.Pelicula.Duracion min</span>
+                                                                    <span class="badge bg-secondary">$@horario.Precio</span>
+                                                                    @if (isPastHorario)
+                                                                    {
+                                                                        <span class="badge bg-secondary"><i class="fas fa-history me-1"></i>Proyectada</span>
+                                                                    }
+                                                                </p>
+                                                                @if (!isPastHorario)
+                                                                {
+                                                                    <div class="btn-group btn-group-sm">
+                                                                        <a asp-action="Edit" asp-route-id="@horario.Id_Horarios" 
+                                                                           class="btn btn-warning btn-sm">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </a>
+                                                                        <a asp-action="Delete" asp-route-id="@horario.Id_Horarios" 
+                                                                           class="btn btn-danger btn-sm">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </a>
+                                                                    </div>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="text-muted small">
+                                                                        <i class="fas fa-clock me-1"></i> Horario pasado
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        var fechaHora = new DateTime(
+                                                            day.Year, day.Month, day.Day, 
+                                                            timeSlot.Hours, timeSlot.Minutes, 0
+                                                        );
+                                                        
+                                                        // Check if the fechaHora is in the past
+                                                        bool isPastTime = fechaHora <= currentDateTime;
+                                                        string btnClass = isPastTime ? "btn-outline-secondary disabled" : "btn-outline-primary";
+                                                        string btnTitle = isPastTime ? "No se pueden programar horarios para fechas u horas pasadas" : "Agregar nuevo horario";
+                                                        
+                                                        <a asp-action="Create" 
+                                                           asp-route-salaId="@sala.Id_Salas" 
+                                                           asp-route-fechaHora="@fechaHora.ToString("yyyy-MM-ddTHH:mm:ss")" 
+                                                           class="btn @btnClass btn-sm create-horario-btn"
+                                                           data-bs-toggle="tooltip" 
+                                                           data-bs-placement="top" 
+                                                           title="@btnTitle">
+                                                            @if (isPastTime)
+                                                            {
+                                                                <i class="fas fa-ban me-1">Pasado</i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-plus me-1">Agregar</i>
+                                                            }
+                                                        </a>
+                                                    }
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

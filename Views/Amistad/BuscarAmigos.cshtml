@@ -1,0 +1,163 @@
+@model List<ASP_MVC_Prueba.Models.Usuarios>
+@{
+    ViewData["Title"] = "Buscar Amigos";
+    var termino = ViewBag.Termino as string ?? "";
+    var usuarioId = ViewBag.UsuarioId;
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/amistad.css" />
+}
+
+<div class="amistad-container">
+    <!-- Header del módulo con pestañas de navegación -->
+    <div class="amistad-tabs">
+        <div class="amistad-tab">
+            <a href="@Url.Action("Index", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-users"></i> Mis Amigos
+            </a>
+        </div>
+        <div class="amistad-tab">
+            <a href="@Url.Action("SolicitudesPendientes", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-bell"></i> Solicitudes
+            </a>
+        </div>
+        <div class="amistad-tab active">
+            <a href="@Url.Action("BuscarAmigos", "Amistad")" class="amistad-tab-link">
+                <i class="fas fa-search"></i> Buscar Amigos
+            </a>
+        </div>
+    </div>
+
+    <!-- Header del módulo -->
+    <div class="amistad-header">
+        <div class="amistad-title">
+            <i class="fas fa-search"></i>
+            <h2>Buscar Amigos</h2>
+        </div>
+        <div class="amistad-actions">
+            <a href="@Url.Action("Index", "Amistad")" class="amistad-btn amistad-btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a Mis Amigos
+            </a>
+        </div>
+    </div>
+
+    <!-- Debug info - quitar en producción -->
+    <div class="amistad-debug" style="background: rgba(0,0,0,0.1); padding: 10px; margin-bottom: 15px; font-size: 0.8rem;">
+        <p>Usuario ID: @usuarioId</p>
+        <p>Nombre: @User.Identity.Name</p>
+        <p>Resultados: @(Model?.Count ?? 0)</p>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="amistad-notifications">
+        @if (TempData["Success"] != null)
+        {
+            <div class="amistad-alert amistad-alert-success">
+                <div class="amistad-alert-content">
+                    <i class="fas fa-check-circle"></i>
+                    <span>@TempData["Success"]</span>
+                </div>
+                <button type="button" class="amistad-alert-close" data-bs-dismiss="alert">×</button>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="amistad-alert amistad-alert-error">
+                <div class="amistad-alert-content">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>@TempData["Error"]</span>
+                </div>
+                <button type="button" class="amistad-alert-close" data-bs-dismiss="alert">×</button>
+            </div>
+        }
+    </div>
+
+    <!-- Formulario de búsqueda -->
+    <div class="amistad-search">
+        <form method="get" action="@Url.Action("BuscarAmigos", "Amistad")">
+            <div class="amistad-search-input">
+                <input type="text" name="termino" value="@termino" placeholder="Buscar por nombre o email..." />
+                <button type="submit" class="amistad-btn amistad-btn-primary">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resultados de búsqueda -->
+    <div class="amistad-content">
+        @if (!string.IsNullOrEmpty(termino))
+        {
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="amistad-results-header">
+                    <h3>Resultados de búsqueda para "@termino"</h3>
+                </div>
+                <div class="amistad-results">
+                    @foreach (var usuario in Model)
+                    {
+                        <div class="amistad-result-card">
+                            <div class="amistad-result-content">
+                                <div class="amistad-card-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="amistad-card-info">
+                                    <h3>@usuario.NombreCompleto</h3>
+                                    <p>@usuario.Email</p>
+                                </div>
+                                <div class="amistad-card-actions">
+                                    <form method="post" action="@Url.Action("EnviarSolicitud", "Amistad")">
+                                        <input type="hidden" name="usuarioReceptorId" value="@usuario.Id_Usuarios" />
+                                        <button type="submit" class="amistad-btn amistad-btn-primary">
+                                            <i class="fas fa-user-plus"></i> Enviar Solicitud
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="amistad-empty">
+                    <div class="amistad-empty-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>No se encontraron usuarios</h3>
+                    <p>No hay usuarios que coincidan con tu búsqueda "@termino".</p>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="amistad-empty">
+                <div class="amistad-empty-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <h3>Busca nuevos amigos</h3>
+                <p>Usa el buscador para encontrar usuarios por nombre o email.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Alert auto-close
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.amistad-alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                    setTimeout(() => {
+                        alert.style.display = 'none';
+                    }, 500);
+                }, 4000);
+            });
+        });
+    </script>
+}
